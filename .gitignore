@@ -1,3 +1,4 @@
 .vscode/
 venv/
 *.mp3
+messages.json
