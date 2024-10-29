@@ -1,0 +1,14 @@
+{
+  "work_start_time": "09:00",
+  "work_end_time": "18:00",
+  "chime_messages": [
+    {
+      "time": "12:00",
+      "message": "12:00 了, 準備吃飯"
+    },
+    {
+      "time": "18:00",
+      "message": "下班時間到了"
+    }
+  ]
+}
