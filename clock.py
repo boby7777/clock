@@ -1,12 +1,14 @@
+import os
 import time
 from datetime import datetime
 from gtts import gTTS
 import pygame
 import pystray
 from pystray import MenuItem as item
-from PIL import Image, ImageDraw
+from PIL import Image
 import threading
 import json
+import uuid
 
 # 初始化 pygame mixer
 pygame.mixer.init()
@@ -22,14 +24,18 @@ work_start_time = datetime.strptime(config["work_start_time"], "%H:%M").time()
 work_end_time = datetime.strptime(config["work_end_time"], "%H:%M").time()
 
 def speak_time(message):
+    filename = f"{uuid.uuid4()}.mp3"
     tts = gTTS(text=message, lang='zh-tw')
-    tts.save("message.mp3")
+    tts.save(filename)
+    time.sleep(1) # 等待檔案寫入
 
-    pygame.mixer.music.load("message.mp3")
+    print(message)
+    pygame.mixer.music.load(filename)
     pygame.mixer.music.set_volume(1.0)
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         pygame.time.Clock().tick(10)
+    os.remove(filename)
 
 def within_work_hours():
     """判斷目前是否在設定的工作時間內"""
@@ -41,23 +47,18 @@ def hourly_chime():
     while True:
         if running and within_work_hours:
             now = datetime.now()
+            found_message = False
             for message in config["chime_messages"]:
                 if message["time"] == f"{now.hour:02d}:{now.minute:02d}":
+                    found_message = True
                     speak_time(message["message"])
-                elif now.minute == 0:
-                    speak_time(f"現在是 {now.hour:02d}:00")
-                time.sleep(60)  # 避免重複播放
-            time.sleep(1)
+                    break
+            if now.minute == 0 and found_message == False:
+                speak_time(f"現在是 {now.hour:02d}:00")
+            time.sleep(60)  # 避免重複播放
         else:
-            time.sleep(60)
+            time.sleep(60) # 每分鐘檢查一次
 
-# 系統匣圖示
-def create_image():
-    image = Image.new('RGB', (64, 64), color=(73, 109, 137))
-    d = ImageDraw.Draw(image)
-    d.rectangle([0, 0, 64, 64], fill=(255, 255, 255))
-    d.text((10, 20), "時", fill=(0, 0, 0))
-    return image
 
 def start_chime(icon, item):
     global running
@@ -75,7 +76,7 @@ def quit_app(icon, item):
     icon.stop()
 
 icon = pystray.Icon("clock")
-icon.icon = create_image()
+icon.icon = Image.open('clock.png')  # 直接讀取 PNG 圖片
 icon.menu = pystray.Menu(
     item('開始報時', start_chime, enabled=lambda item: not running),
     item('停止報時', stop_chime, enabled=lambda item: running),
