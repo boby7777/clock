@@ -35,6 +35,7 @@ def speak_time(message):
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         pygame.time.Clock().tick(10)
+    time.sleep(1) # 等待檔案釋放
     os.remove(filename)
 
 def within_work_hours():
